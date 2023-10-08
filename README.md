@@ -13,3 +13,5 @@ The files are setup in such a way that each (except for the interfaces) can func
 - my_plots.py: Contains one class that creates a simple and not-at-all-pretty scatter plot
 - main_tk.py: Run this to see an example tkinter GUI
 - main_qt.py: Run this to see an example PyQt5 GUI
+
+The main_tk and main_qt files also exist with _v2 in their name. These files have been refactored as an example of better readability/editablity (see the areas where buttons are created) but are otherwise identical to the versions above.

@@ -23,7 +23,60 @@ import matplotlib.pyplot as plt
 from datetime import datetime as dt
 from tkinter import filedialog as fd
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+from PyQt5 import QtGui as qtg
+from PyQt5.QtCore import Qt as qt
+from PyQt5 import QtWidgets as qtw
+
+class MyPlot:
+    '''
+    Class handles all aspects of figure creation, updating, output
+    '''
+    __SLOTS__ = ('fig', 
+                 'ax', 
+                 'scat')
     
+    PATH_FIGURES = './figures/'
+    
+    def __init__(self):
+        self.fig = None
+        self.check_directories()
+        return
+    
+    def check_directories(self):
+        if not os.path.exists(self.PATH_FIGURES):
+            os.mkdir(self.PATH_FIGURES)
+        return
+
+    def init_scatter(self):
+        # Note: There is an issue with tk,
+        #  do not create a figure before calling tk.Tk()
+        self.fig, self.ax = plt.subplots(figsize=(2,2),
+                                         dpi = 72)
+        self.scat = self.ax.scatter([],[], 
+                                    s=10)
+        return
+    
+    def update_scatter(self, 
+                       scatter_data: pd.DataFrame
+                       ):
+        '''
+        scatter_data should be a pandas DataFrame with columns
+        labeled 'x' and 'y'
+        '''
+        self.scat.set_offsets(scatter_data.values)
+        self.ax.set_xlim([min(scatter_data['x']),
+                          max(scatter_data['x'])
+                          ])
+        self.ax.set_ylim([min(scatter_data['y']),
+                          max(scatter_data['y'])
+                          ])
+        return
+    
+    def save_plot(self):
+        self.fig.savefig(self.PATH_FIGURES + 'figure.pdf', 
+                         bbox_inches='tight')
+        return
 
 class MyEngine:
     '''
@@ -35,6 +88,8 @@ class MyEngine:
     '''
 
     PATH_DATA = './data/'
+    PATH_FIGURES = './figures/'
+
     def __init__(self):
         self.check_directories()
         return
@@ -42,6 +97,8 @@ class MyEngine:
     def check_directories(self):
         if not os.path.exists(self.PATH_DATA):
             os.mkdir(self.PATH_DATA)
+        if not os.path.exists(self.PATH_FIGURES):
+            os.mkdir(self.PATH_FIGURES)
         return
     
     def timestamp(self) -> str:
@@ -79,7 +136,7 @@ class MyEngine:
                                  columns=['x','y'])
         return
     
-class MyInterface:
+class MyInterface_Tk:
     '''
     This class does all of the interface/visualization stuff.
     It does NONE of the math/data stuff (it has a MyEngine component for those parts)
@@ -93,28 +150,33 @@ class MyInterface:
                  geometry = '600x480'
                  ):
         
-        # Favor composition over inheritence
+        # The engine is for the math/analysis
         self.engine = MyEngine()
-        
+        # The display is for the plot        
+        self.display = MyPlot()
+        # Layout the figure and the buttons
         self.configure_main_window(geometry)
-        self.make_plot()
 
+        # The mainloop() runs the application
         self.main_window.mainloop()
         return
 
     def configure_main_window(self,
                               geometry: str
                               ):
+        
+        # Function defines and places all the buttons.
+        # Could not include the placement of the plot here
+        # due to a mysterious "unrecognized selector" error, so
+        # the plot is constructed after this function is called
+        
         self.main_window = tk.Tk()
         self.main_window.geometry(geometry)
         self.main_window.title('Example interface using tkinter')
 
-        # Split the main_window into two rows (top for plot, bottom for buttons)
+        # Create the interface area,
+        # which will be a container for the plot and the buttons
         self.interface_area = tk.Frame(self.main_window)
-        
-        # Not needed since we are using .grid below, but leaving it as a reminder
-        #self.interface_area.rowconfigure(0, weight=1) # The plot area
-        #self.interface_area.rowconfigure(1, weight=1) # The buttons area
 
         ### Buttons
         #  Make random data button
@@ -149,46 +211,30 @@ class MyInterface:
         
         # Save plot button
         btn_save_plot = tk.Button(master        = self.interface_area,
-                                  command       = self.save_plot,
+                                  command       = self.display.save_plot,
                                   text          = 'Save Figure',
-                                  wraplength  = self.BTN_WRAPLEN,
-                                  height      = self.BTN_HEIGHT,
-                                  width       = self.BTN_WIDTH
+                                  wraplength    = self.BTN_WRAPLEN,
+                                  height        = self.BTN_HEIGHT,
+                                  width         = self.BTN_WIDTH
                                   )
         btn_save_plot.grid(row=2, column=1)
 
-        # Pack it up
+        ### Set up the figure
+        self.display.init_scatter()
+        # The canvas object to link the figure to the interface
+        self.canvas = FigureCanvasTkAgg(self.display.fig,
+                                        master = self.interface_area)
+        self.canvas.get_tk_widget().grid(row=0,        # Place the canvas in the top row
+                                         columnspan=2, # Based on how many buttons we defined
+                                         sticky=tk.E + tk.W)
+
+        # Pack the interface
         self.interface_area.pack()
         return
     
-    def make_plot(self):
-        self.fig, self.ax = plt.subplots(figsize=(2,2), 
-                                         dpi=72)
-        
-        self.scat = self.ax.scatter([],[], 
-                                    s= 10)
-        
-        self.canvas = FigureCanvasTkAgg(self.fig, 
-                                        master=self.interface_area)
-        self.canvas.draw()
-        self.canvas.get_tk_widget().grid(row=0, 
-                                         columnspan=3,
-                                         sticky=tk.E + tk.W)
-        return
-    
     def update_plot(self):
-        self.scat.set_offsets(self.engine.data.values)
-        self.ax.set_xlim([min(self.engine.data['x']),
-                          max(self.engine.data['x'])
-                          ])
-        self.ax.set_ylim([min(self.engine.data['y']),
-                          max(self.engine.data['y'])
-                          ])
+        self.display.update_scatter(self.engine.data)
         self.canvas.draw()
-        return
-    
-    def save_plot(self):
-        self.fig.savefig('figure.pdf', bbox_inches='tight')
         return
     
     def make_random_data(self):
@@ -201,6 +247,26 @@ class MyInterface:
         self.engine.load_data(filename)
         self.update_plot()
         return
-    
+
+class MyInterface_Qt:
+    def __init__(self):
+        
+        # Application
+        self.app = qtw.QApplication([])
+
+        # Main window
+        self.main_window = qtw.QWidget()
+        self.main_window.setWindowTitle('Example interface using PyQt5')
+
+        # The main layout
+        self.main_layout = qtw.QVBoxLayout()
+
+        # The figure
+        # self.fig, self.ax = 
+
+
+        return
+
 if __name__ == '__main__':
-    MyInterface()
+    MyInterface_Tk()
+    #MyInterface_Qt()

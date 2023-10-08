@@ -14,15 +14,16 @@ from my_analysis import RandomDataAnalysis
 import sys
 
 # Libraries for the PyQt5 interface
-from PyQt5 import QtGui as qtg
-from PyQt5.QtCore import Qt as qt
+#from PyQt5 import QtGui as qtg
+#from PyQt5.QtCore import Qt as qt
 from PyQt5 import QtWidgets as qtw
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 
 
 class MyInterface_Qt:
     def __init__(self,
-                 geometry = None):
+                 geometry = None # Unused
+                 ):
         
         # The engine is for the math/analysis
         self.engine = RandomDataAnalysis()

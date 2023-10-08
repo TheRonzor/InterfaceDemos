@@ -6,136 +6,15 @@
 #                                                                        #
 ##########################################################################
 
-# Comment out the below (not recommended) to not print The Zen of Python
-print('\n')
-import this
-print('\n')
+# My libraries
+from my_plots import SimpleScatter
+from my_analysis import RandomDataAnalysis
 
-# Pardon the order of my imports, 
-# it would be more logical to group them by functionality,
-# but I like them to look like a mountainside ;-)
-import os
-import time
-import numpy as np
-import pandas as pd
+# Libraries for the tkinter interface
 import tkinter as tk
-import matplotlib.pyplot as plt
-from datetime import datetime as dt
 from tkinter import filedialog as fd
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-from PyQt5 import QtGui as qtg
-from PyQt5.QtCore import Qt as qt
-from PyQt5 import QtWidgets as qtw
-
-class MyPlot:
-    '''
-    Class handles all aspects of figure creation, updating, output
-    '''
-    __SLOTS__ = ('fig', 
-                 'ax', 
-                 'scat')
-    
-    PATH_FIGURES = './figures/'
-    
-    def __init__(self):
-        self.fig = None
-        self.check_directories()
-        return
-    
-    def check_directories(self):
-        if not os.path.exists(self.PATH_FIGURES):
-            os.mkdir(self.PATH_FIGURES)
-        return
-
-    def init_scatter(self):
-        # Note: There is an issue with tk,
-        #  do not create a figure before calling tk.Tk()
-        self.fig, self.ax = plt.subplots(figsize=(2,2),
-                                         dpi = 72)
-        self.scat = self.ax.scatter([],[], 
-                                    s=10)
-        return
-    
-    def update_scatter(self, 
-                       scatter_data: pd.DataFrame
-                       ):
-        '''
-        scatter_data should be a pandas DataFrame with columns
-        labeled 'x' and 'y'
-        '''
-        self.scat.set_offsets(scatter_data.values)
-        self.ax.set_xlim([min(scatter_data['x']),
-                          max(scatter_data['x'])
-                          ])
-        self.ax.set_ylim([min(scatter_data['y']),
-                          max(scatter_data['y'])
-                          ])
-        return
-    
-    def save_plot(self):
-        self.fig.savefig(self.PATH_FIGURES + 'figure.pdf', 
-                         bbox_inches='tight')
-        return
-
-class MyEngine:
-    '''
-    This class does all the data/math/etc stuff.
-    It does NONE of the visualization/interface stuff.
-
-    It can be used by another class that defines an interface,
-    and that class should ask this class to do any math/computation/data stuff.
-    '''
-
-    PATH_DATA = './data/'
-    PATH_FIGURES = './figures/'
-
-    def __init__(self):
-        self.check_directories()
-        return
-    
-    def check_directories(self):
-        if not os.path.exists(self.PATH_DATA):
-            os.mkdir(self.PATH_DATA)
-        if not os.path.exists(self.PATH_FIGURES):
-            os.mkdir(self.PATH_FIGURES)
-        return
-    
-    def timestamp(self) -> str:
-        '''
-        Returns a unique timestamp as a string
-        '''
-        return str(dt.now()).replace(':', '.').replace(' ', '-')
-
-    def output_data(self):
-        '''
-        Output the currently loaded data as a .csv file with a default naming convention
-        '''
-        file_name = self.PATH_DATA + 'data_' + self.timestamp() + '.csv'
-        self.data.to_csv(file_name, index=False)
-        return
-    
-    def load_data(self, 
-                  file_name: str
-                  ):
-        '''
-        Load a data file
-        '''
-        self.data = pd.read_csv(file_name)
-        return
-
-    def make_random_data(self, 
-                         num_points=10
-                         ):
-        '''
-        Generate some random data
-        '''
-        data = np.random.normal(size=(num_points,2))
-        data[:,1] = data[:,0] + 0.5*data[:,1]
-        self.data = pd.DataFrame(data, 
-                                 columns=['x','y'])
-        return
-    
 class MyInterface_Tk:
     '''
     This class does all of the interface/visualization stuff.
@@ -151,9 +30,9 @@ class MyInterface_Tk:
                  ):
         
         # The engine is for the math/analysis
-        self.engine = MyEngine()
+        self.engine = RandomDataAnalysis()
         # The display is for the plot        
-        self.display = MyPlot()
+        self.display = SimpleScatter()
         # Layout the figure and the buttons
         self.configure_main_window(geometry)
 
@@ -244,29 +123,12 @@ class MyInterface_Tk:
     
     def load_data(self):
         filename = fd.askopenfilename()
-        self.engine.load_data(filename)
-        self.update_plot()
-        return
-
-class MyInterface_Qt:
-    def __init__(self):
-        
-        # Application
-        self.app = qtw.QApplication([])
-
-        # Main window
-        self.main_window = qtw.QWidget()
-        self.main_window.setWindowTitle('Example interface using PyQt5')
-
-        # The main layout
-        self.main_layout = qtw.QVBoxLayout()
-
-        # The figure
-        # self.fig, self.ax = 
-
-
+        try:
+            self.engine.load_data(filename)
+            self.update_plot()
+        except Exception as e:
+            print('Problem loading data. File name was: ' + str(filename))
         return
 
 if __name__ == '__main__':
     MyInterface_Tk()
-    #MyInterface_Qt()

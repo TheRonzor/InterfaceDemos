@@ -42,6 +42,11 @@ class SimpleScatter:
                                     s=10)
         return
     
+    def save_plot(self):
+        self.fig.savefig(self.PATH_FIGURES + 'figure.pdf', 
+                         bbox_inches='tight')
+        return
+    
     def update_scatter(self, 
                        scatter_data: pd.DataFrame
                        ):
@@ -56,9 +61,4 @@ class SimpleScatter:
         self.ax.set_ylim([min(scatter_data['y']),
                           max(scatter_data['y'])
                           ])
-        return
-    
-    def save_plot(self):
-        self.fig.savefig(self.PATH_FIGURES + 'figure.pdf', 
-                         bbox_inches='tight')
         return

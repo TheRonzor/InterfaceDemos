@@ -14,7 +14,7 @@ class SimpleScatter:
     '''
     A basic scatter plot, based on a pandas DataFrame
     '''
-    __SLOTS__ = ('fig', 
+    __slots__ = ('fig', 
                  'ax', 
                  'scat')
     

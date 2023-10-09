@@ -96,7 +96,7 @@ class MyInterface_Qt:
         
         # Save Figure
         self.button_save_figure = qtw.QPushButton("Save Figure")
-        self.button_save_figure.clicked.connect(self.display.save_plot)
+        self.button_save_figure.clicked.connect(lambda: self.display.save_plot())
         self.button_row2.addWidget(self.button_save_figure)
         return
     

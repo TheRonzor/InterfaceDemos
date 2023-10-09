@@ -101,7 +101,7 @@ class MyInterface_Qt:
                                  )
         self.button_save_figure = \
             self.__create_button(text = "Save Figure",
-                                 command = self.display.save_plot,
+                                 command = lambda: self.display.save_plot(),
                                  layout = self.button_row2
                                  )
         return

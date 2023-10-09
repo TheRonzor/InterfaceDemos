@@ -6,6 +6,10 @@
 #                                                                        #
 ##########################################################################
 
+
+# Step 1 of refactoring - group the logic for creating buttons into a function
+
+
 # My libraries
 from my_plots import SimpleScatter
 from my_analysis import RandomDataAnalysis
